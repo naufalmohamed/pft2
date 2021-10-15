@@ -32,7 +32,7 @@
 	          </li>
 	
 	          <li>
-              <a href="#"><span class="fa fa-sign-out"></span> Sign Out</a>
+              <a href="/logout"><span class="fa fa-sign-out"></span> Sign Out</a>
 	          </li>
 	        </ul>        
     	</nav>
@@ -41,8 +41,11 @@
 		
       <div id="content" class="p-4 p-md-5 pt-5">
 		{% block body %}
-        <h2 class="mb-4">Welcome {{email}}</h2>
-        <p>Description Here</p>
+        <h2 class="mb-4">Welcome {{client_info[0][3]}} {{client_info[0][4]}}</h2>
+        <p>{{description}}</p>
+		{% if profile_complete == False %}
+			<p><a href = '/edit_profile'>Click Here</a></p>
+		{% endif %}
 		{% endblock %}
       </div>
 		</div>

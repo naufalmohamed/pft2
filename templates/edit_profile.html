@@ -33,68 +33,104 @@ body{
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex flex-column align-items-center text-center">
-                            <img src="https://bootdey.com/img/Content/avatar/avatar6.png" alt="Admin" class="rounded-circle p-1 bg-primary" width="110">
+                            <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin" class="rounded-circle width="150">
                             <div class="mt-3">
-                                <h4>John Doe</h4>
-                                <p class="text-secondary mb-1">Full Stack Developer</p>
-                                <p class="text-muted font-size-sm">Bay Area, San Francisco, CA</p>
+                                <h4>{{client_info[0][3]}} {{client_info[0][4]}}</h4>
+                                
                             </div>
                         </div>
                         
                     </div>
                 </div>
             </div>
+            
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Full Name</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                <input type="text" class="form-control" value="John Doe">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Email</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                <input type="text" class="form-control" value="john@example.com">
-                            </div>
-                        </div>
+                        <form action = '/edit_info' method="post">
                         <div class="row mb-3">
                             <div class="col-sm-3">
                                 <h6 class="mb-0">Phone</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <input type="text" class="form-control" value="(239) 816-9029">
+                                <input type="text" class="form-control" name="phone" placeholder = {{client_info[0][9]}}>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-sm-3">
-                                <h6 class="mb-0">Mobile</h6>
+                                <h6 class="mb-0">Age</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <input type="text" class="form-control" value="(320) 380-4539">
+                                <input type="text" class="form-control" name="age" placeholder = {{client_info[0][5]}}>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-sm-3">
-                                <h6 class="mb-0">Address</h6>
+                                <h6 class="mb-0">City</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <input type="text" class="form-control" value="Bay Area, San Francisco, CA">
+                                <input type="text" class="form-control" name="city" placeholder = {{client_info[0][6]}}>
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Occupation</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="text" class="form-control" name="occupation" placeholder = {{client_info[0][7]}}>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Concerns</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-control" name = "concerns" placeholder = {{client_info[0][8]}}>
+                                    <option value="OCD">OCD</option>
+                                    <option value="Family Issues">Family Issues</option>
+                                    <option value="Family Issues">Romantic Issues</option>
+                                  </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Relationship Status</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-control" name = "relationship_status" placeholder = {{client_info[0][11]}}>
+                                    <option value="married">Married</option>
+                                    <option value="unmarried">Unmarried</option>
+                                  </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Emergency Contact</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="text" class="form-control" name="emergency_contact" placeholder = {{client_info[0][10]}}>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Time Period</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-control" name = "timeperiod" placeholder = {{client_info[0][14]}}>
+                                    <option value="Within a Week">Within a Week</option>
+                                    <option value="Within a Month">Within a Month</option>
+                                    <option value="As Soon As Possible">As Soon As Possible</option>
+                                  </select>
+                            </div>
                         <div class="row">
                             <div class="col-sm-3"></div>
                             <div class="col-sm-9 text-secondary">
-                                <input type="button" class="btn btn-primary px-4" value="Save Changes">
+                                <a href = '/edit_info'><input type="submit" class="btn btn-primary btn-block btn-lg" value="update"></a>              
                             </div>
                         </div>
                     </div>
                 </div>
+                </form>
             </div>
         </div>
     </div>
