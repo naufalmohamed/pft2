@@ -39,51 +39,54 @@ def login_page_client():
 
 @app.route('/login', methods=['POST'])
 def login():
-    if request.method == 'POST':
-        session.pop('user', None)
-        username, password, database, hostname, port = parse()
-        email = request.form.get("email")
-        psw = request.form.get("psw")
-        login_type = request.form.get("login_type")
-        if login_type == "therapist":
-            try:
-                dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
-                cursor = dbconn.cursor()
-                cursor.execute(f"SELECT * FROM therapist_cred WHERE email = %s;",[email])
-                cred = cursor.fetchall()
-                dbconn.commit()
-            except:
-                return redirect(url_for("login_page_client"))
-
-            if cred[0][2] == psw:
-                session['user'] = email
-                session['first_name'] = cred[0][3]
-                session['last_name'] = cred[0][4]
-                session['id'] = cred[0][0]
-                return redirect(url_for('therapist_index'))
-            else:
-                return redirect(url_for('login_page'))     
-        else:
-            try:
-                dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
-                cursor = dbconn.cursor()
-                cursor.execute(f"SELECT password FROM client_cred WHERE email = %s;",[email])
-                cred = cursor.fetchall()
-                dbconn.commit()
-            except:
+    if 'user' in session:
+        return redirect(url_for('login_page_client'))
+    else:
+        if request.method == 'POST':
+            session.pop('user', None)
+            username, password, database, hostname, port = parse()
+            email = request.form.get("email")
+            psw = request.form.get("psw")
+            login_type = request.form.get("login_type")
+            if login_type == "therapist":
+                try:
+                    dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
+                    cursor = dbconn.cursor()
+                    cursor.execute(f"SELECT * FROM therapist_cred WHERE email = %s;",[email])
+                    cred = cursor.fetchall()
+                    dbconn.commit()
+                except:
                     return redirect(url_for("login_page_client"))
 
-            if cred[0][0] == psw:
-                session['user'] = email
-                return redirect(url_for('user_index'))
+                if cred[0][2] == psw:
+                    session['user'] = email
+                    session['first_name'] = cred[0][3]
+                    session['last_name'] = cred[0][4]
+                    session['id'] = cred[0][0]
+                    return redirect(url_for('therapist_index'))
+                else:
+                    return redirect(url_for('login_page'))     
             else:
-                return redirect(url_for('login_page_client'))
+                try:
+                    dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
+                    cursor = dbconn.cursor()
+                    cursor.execute(f"SELECT password FROM client_cred WHERE email = %s;",[email])
+                    cred = cursor.fetchall()
+                    dbconn.commit()
+                except:
+                        return redirect(url_for("login_page_client"))
+
+                if cred[0][0] == psw:
+                    session['user'] = email
+                    return redirect(url_for('user_index'))
+                else:
+                    return redirect(url_for('login_page_client'))
 
 
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login_page_client'))
+    return redirect(url_for('index'))
 
 
 @app.route('/register_client_page')
@@ -157,6 +160,7 @@ def edit_info():
         concerns = request.form.get('concerns')
         relationship_status = request.form.get('relationship_status')
         timeperiod = request.form.get('timeperiod')
+        emergency_contact = request.form.get('emergency_contact')
         username, password, database, hostname, port = parse()
         dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
         cursor = dbconn.cursor()
@@ -169,6 +173,7 @@ def edit_info():
         cursor.execute(f"""UPDATE client_cred SET timeperiod = %s WHERE email = %s;""",(timeperiod,session['user']))
         cursor.execute(f"""UPDATE client_cred SET status = %s WHERE email = %s;""",('free',session['user']))
         cursor.execute(f"""UPDATE client_cred SET therapist = %s WHERE email = %s;""",('free',session['user']))
+        cursor.execute(f"""UPDATE client_cred SET emergency_contact = %s WHERE email = %s;""",(emergency_contact,session['user']))
         dbconn.commit()
         return redirect(url_for('user_index'))
 
@@ -197,23 +202,31 @@ def accepted_clients():
     dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
     cursor = dbconn.cursor()
     cursor.execute(f"""SELECT * FROM {session['table_name']};""")
-    client_info = cursor.fetchall()
+    accepted_client_info = cursor.fetchall()
+    
+    client_ids = []
+    for client in accepted_client_info:
+        client_ids.append(client[3])
+    
+    client_info = []
+
+    for client_id in client_ids:
+        cursor.execute(f"""SELECT * FROM client_cred WHERE id = %s;""",(client_id))
+        info = cursor.fetchall()
+        client_info.append(info)
     dbconn.commit()
-    return render_template('therapist_index.html', client_info = client_info, session = session)
+
+    return render_template('accepted_clients.html', client_info = client_info, session = session)
 
 
-@app.route('/accept_client/<ref_email>')
-def accept_client(ref_email):
+@app.route('/accept_client/<int:client_id>')
+def accept_client(client_id):
     username, password, database, hostname, port = parse()
-    arr = ref_email.split('@')
-    arr_2 = arr[1].split('.')
-    arr_3 = [arr[0],arr_2[0]]
-    ref_email_arr = ''.join(arr_3)
     dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
     cursor = dbconn.cursor()
-    cursor.execute(f"""UPDATE client_cred SET status = %s WHERE email = %s;""",('accepted',ref_email))
-    cursor.execute(f"""UPDATE client_cred SET therapist = %s WHERE email = %s;""",(session['user'],ref_email))
-    cursor.execute(f"""INSERT INTO {session['table_name']} (date,status,client) VALUES (%s,%s,%s);""",(date.today(),'accepted',ref_email_arr))
+    cursor.execute(f"""UPDATE client_cred SET status = %s WHERE id = %s;""",('accepted',client_id))
+    cursor.execute(f"""UPDATE client_cred SET therapist = %s WHERE id = %s;""",(session['user'],client_id))
+    cursor.execute(f"""INSERT INTO {session['table_name']} (date,status,client) VALUES (%s,%s,%s);""",(date.today(),'accepted',client_id))
     dbconn.commit()
 
     return redirect(url_for('therapist_index'))
