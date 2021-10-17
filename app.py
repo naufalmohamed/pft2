@@ -1,5 +1,5 @@
 from logging import error
-from flask import Flask, render_template, url_for, redirect, request, session
+from flask import Flask, render_template, url_for, redirect, request, session, flash
 from urllib.parse import urlparse
 import psycopg2
 from flask_mail import Mail, Message
@@ -39,49 +39,63 @@ def login_page_client():
 
 @app.route('/login', methods=['POST'])
 def login():
-    if 'user' in session:
-        return redirect(url_for('login_page_client'))
-    else:
-        if request.method == 'POST':
-            session.pop('user', None)
-            username, password, database, hostname, port = parse()
-            email = request.form.get("email")
-            psw = request.form.get("psw")
-            login_type = request.form.get("login_type")
-            if login_type == "therapist":
-                try:
-                    dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
-                    cursor = dbconn.cursor()
-                    cursor.execute(f"SELECT * FROM therapist_cred WHERE email = %s;",[email])
-                    cred = cursor.fetchall()
-                    dbconn.commit()
-                except:
-                    return redirect(url_for("login_page_client"))
-
-                if cred[0][2] == psw:
-                    session['user'] = email
-                    session['first_name'] = cred[0][3]
-                    session['last_name'] = cred[0][4]
-                    session['id'] = cred[0][0]
-                    return redirect(url_for('therapist_index'))
-                else:
-                    return redirect(url_for('login_page'))     
+    try:
+        if 'user' in session:
+            flash('User Already in Session! Logout To Continue as a Different User!')
+            if session['user_type'] == 'therapist':
+                return redirect(url_for('therapist_index'))
             else:
-                try:
-                    dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
-                    cursor = dbconn.cursor()
-                    cursor.execute(f"SELECT password FROM client_cred WHERE email = %s;",[email])
-                    cred = cursor.fetchall()
-                    dbconn.commit()
-                except:
+                return redirect(url_for('user_index'))
+        else:
+            if request.method == 'POST':
+                session.pop('user', None)
+                username, password, database, hostname, port = parse()
+                email = request.form.get("email")
+                psw = request.form.get("psw")
+                login_type = request.form.get("login_type")
+                if login_type == "therapist":
+                    try:
+                        dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
+                        cursor = dbconn.cursor()
+                        cursor.execute(f"SELECT * FROM therapist_cred WHERE email = %s;",[email])
+                        cred = cursor.fetchall()
+                        dbconn.commit()
+                    except:
+                        flash('User Doesnt Exist!')
                         return redirect(url_for("login_page_client"))
 
-                if cred[0][0] == psw:
-                    session['user'] = email
-                    return redirect(url_for('user_index'))
+                    if cred[0][2] == psw:
+                        session['user'] = email
+                        session['first_name'] = cred[0][3]
+                        session['last_name'] = cred[0][4]
+                        session['id'] = cred[0][0]
+                        session['user_type'] = 'therapist'
+                        return redirect(url_for('therapist_index'))
+                    else:
+                        flash('Bad Credentials! Try Again!')
+                        return redirect(url_for('login_page'))     
                 else:
-                    return redirect(url_for('login_page_client'))
+                    try:
+                        dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
+                        cursor = dbconn.cursor()
+                        cursor.execute(f"SELECT password FROM client_cred WHERE email = %s;",[email])
+                        cred = cursor.fetchall()
+                        dbconn.commit()
+                    except:
+                        flash('User Doesnt Exist!')
+                        return redirect(url_for("login_page_client"))
 
+                    if cred[0][0] == psw:
+                        session['user'] = email
+                        session['user_type'] = 'client'
+
+                        return redirect(url_for('user_index'))
+                    else:
+                        flash('Bad Credentials! Try Again!')
+                        return redirect(url_for('login_page_client'))
+    except Exception as e:
+        flash('Something Went Wrong! Try Again!')
+        return redirect(url_for('login_page_client'))
 
 @app.route('/logout')
 def logout():
@@ -103,11 +117,28 @@ def register_client():
         psw_repeat = request.form.get("psw_repeat")
         first_name = request.form.get("first_name")
         last_name = request.form.get("last_name")
-        dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
-        cursor = dbconn.cursor()
-        cursor.execute(f"""INSERT INTO client_cred (email, password, status,first_name,last_name) VALUES (%s,%s,%s,%s,%s);""",(email,psw,'empty',first_name,last_name))
-        dbconn.commit()
-        return redirect('login_page_client')
+        if psw != psw_repeat:
+            flash('Passwords Dont Match!')
+            return redirect(url_for('register_client_page'))
+        else:
+            if len(psw) < 8:
+                flash('Password Must be 8 Characters Long!')
+                return redirect(url_for('register_client_page'))
+            else:
+                dbconn = psycopg2.connect(database = database,user = username,password = password,host = hostname,port = port)
+                cursor = dbconn.cursor()
+                cursor.execute(f'''SELECT id FROM client_cred WHERE email = %s ;''',[email])
+                cl = cursor.fetchall()
+                cursor.execute(f'''SELECT id FROM therapist_cred WHERE email = %s ;''',[email])
+                tl = cursor.fetchall()
+                if len(cl) == 0 and len(tl) == 0:
+                    cursor.execute(f"""INSERT INTO client_cred (email, password, status,first_name,last_name) VALUES (%s,%s,%s,%s,%s);""",(email,psw,'empty',first_name,last_name))
+                    dbconn.commit()
+                    return redirect('login_page_client')
+                else:
+                    dbconn.commit()
+                    flash('User Already Exists!')
+                    return redirect(url_for('register_client_page'))
 
 
 @app.route('/user_index')
