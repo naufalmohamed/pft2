@@ -34,7 +34,14 @@ def index():
 
 @app.route('/login_page_client')
 def login_page_client():
-    return render_template('login_page_client.html')
+    if 'user' in session:
+            flash('User Already in Session! Logout To Continue as a Different User!')
+            if session['user_type'] == 'therapist':
+                return redirect(url_for('therapist_index'))
+            else:
+                return redirect(url_for('user_index'))
+    else:
+        return render_template('login_page_client.html')
    
 
 @app.route('/login', methods=['POST'])
