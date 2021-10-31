@@ -270,4 +270,4 @@ def accept_client(client_id):
     return redirect(url_for('therapist_index'))
 
 if __name__ == "__main__":
-	app.run(debug=True)
+	app.run()
